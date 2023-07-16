@@ -1,0 +1,37 @@
+html {
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
+    touch-action: none;
+}
+
+body {
+    background-color: black;
+}
+
+#main-container {
+    width: min(90vw, 90vh);
+    height: min(90vw, 90vh);
+    position: fixed;
+    left: calc((100vw - min(90vw, 90vh)) * 0.5);
+    top: calc((100vh - min(90vw, 90vh)) * 0.5);
+}
+
+#credit {
+    color: white;
+    position: fixed;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    font-size: 20px;
+    width: 300px;
+    line-height: 110%;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    background-color: black;
+    border-radius: 20px;
+    text-align: center;
+    border: 2px solid white;
+    right: 15px;
+    bottom: 15px;
+    z-index: 10;
+}
