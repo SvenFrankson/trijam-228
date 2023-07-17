@@ -57,7 +57,7 @@ class CircleRenderer extends Renderer {
     public set radius(v: number) {
         this._radius = v;
         if (this.svgElement) {
-            this.svgElement.setAttribute("r", this.radius.toFixed(0));
+            this.svgElement.setAttribute("r", this.radius.toFixed(1));
         }
     }
 

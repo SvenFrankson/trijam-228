@@ -70,14 +70,24 @@ class Player extends Gameobject {
             if (other instanceof Food) {
                 let sqrDist = Vec2.DistanceSquared(this.pos, other.pos);
                 let rSum = this.radius + other.radius;
-                if (sqrDist < rSum * rSum) {
-                    let dSize = other.size;
-                    other.size -= 200;
-                    dSize = dSize - other.size;
-                    this.size += dSize;
+                if (this.radius > other.radius) {
+                    while (other.radius > 0 && sqrDist < rSum * rSum) {
+                        let dSize = other.size;
+                        other.size -= 10;
+                        dSize = dSize - other.size;
+                        this.size += dSize * 0.5;
+                        rSum = this.radius + other.radius;
+                        this.speed.scaleInPlace(0.999);
+                    }
+                }
+                else if (sqrDist < rSum * rSum) {
+                    let axis = this.pos.subtract(other.pos);
+                    this.speed.mirrorInPlace(axis);
+                    this.pos.x += this.speed.x * dt;
+                    this.pos.y += this.speed.y * dt;            
                 }
             }
-        })
+        });
     }
 
     public stop(): void {

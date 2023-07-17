@@ -15,6 +15,7 @@ body {
     position: fixed;
     left: calc((100vw - min(90vw, 90vh)) * 0.5);
     top: calc((100vh - min(90vw, 90vh)) * 0.5);
+    background-color: darkcyan;
 }
 
 #credit {

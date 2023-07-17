@@ -275,11 +275,21 @@ class Player extends Gameobject {
             if (other instanceof Food) {
                 let sqrDist = Vec2.DistanceSquared(this.pos, other.pos);
                 let rSum = this.radius + other.radius;
-                if (sqrDist < rSum * rSum) {
-                    let dSize = other.size;
-                    other.size -= 200;
-                    dSize = dSize - other.size;
-                    this.size += dSize;
+                if (this.radius > other.radius) {
+                    while (other.radius > 0 && sqrDist < rSum * rSum) {
+                        let dSize = other.size;
+                        other.size -= 10;
+                        dSize = dSize - other.size;
+                        this.size += dSize * 0.5;
+                        rSum = this.radius + other.radius;
+                        this.speed.scaleInPlace(0.999);
+                    }
+                }
+                else if (sqrDist < rSum * rSum) {
+                    let axis = this.pos.subtract(other.pos);
+                    this.speed.mirrorInPlace(axis);
+                    this.pos.x += this.speed.x * dt;
+                    this.pos.y += this.speed.y * dt;
                 }
             }
         });
@@ -345,7 +355,7 @@ class CircleRenderer extends Renderer {
     set radius(v) {
         this._radius = v;
         if (this.svgElement) {
-            this.svgElement.setAttribute("r", this.radius.toFixed(0));
+            this.svgElement.setAttribute("r", this.radius.toFixed(1));
         }
     }
     onClassAdded(c) {
@@ -606,6 +616,19 @@ class Vec2 {
     static Dot(a, b) {
         return a.x * b.x + a.y * b.y;
     }
+    static AngleFromTo(from, to, keepPositive = false) {
+        let dot = Vec2.Dot(from, to) / from.length() / to.length();
+        let angle = Math.acos(dot);
+        let cross = from.x * to.y - from.y * to.x;
+        if (cross === 0) {
+            cross = 1;
+        }
+        angle *= Math.sign(cross);
+        if (keepPositive && angle < 0) {
+            angle += Math.PI * 2;
+        }
+        return angle;
+    }
     lengthSquared() {
         return this.x * this.x + this.y * this.y;
     }
@@ -648,6 +671,15 @@ class Vec2 {
         let y = Math.cos(alpha) * this.y + Math.sin(alpha) * this.x;
         this.x = x;
         this.y = y;
+        return this;
+    }
+    mirror(axis) {
+        return this.clone().mirrorInPlace(axis);
+    }
+    mirrorInPlace(axis) {
+        this.scaleInPlace(-1);
+        let a = Vec2.AngleFromTo(this, axis);
+        this.rotateInPlace(2 * a);
         return this;
     }
     static ProjectOnABLine(pt, ptA, ptB) {

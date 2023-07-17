@@ -37,6 +37,20 @@ class Vec2 {
         return a.x * b.x + a.y * b.y;
     }
 
+    public static AngleFromTo(from: Vec2, to: Vec2, keepPositive: boolean = false): number {
+        let dot = Vec2.Dot(from, to) / from.length() / to.length();
+        let angle = Math.acos(dot);
+        let cross = from.x * to.y - from.y * to.x;
+        if (cross === 0) {
+            cross = 1;
+        }
+        angle *= Math.sign(cross);
+        if (keepPositive && angle < 0) {
+            angle += Math.PI * 2;
+        }
+        return angle;
+    }
+
     public lengthSquared(): number {
         return this.x * this.x + this.y * this.y;
     }
@@ -98,6 +112,18 @@ class Vec2 {
         let y = Math.cos(alpha) * this.y + Math.sin(alpha) * this.x;
         this.x = x;
         this.y = y;
+
+        return this;
+    }
+
+    public mirror(axis: Vec2): Vec2 {
+        return this.clone().mirrorInPlace(axis);
+    }
+
+    public mirrorInPlace(axis: Vec2): Vec2 {
+        this.scaleInPlace(-1);
+        let a = Vec2.AngleFromTo(this, axis);
+        this.rotateInPlace(2 * a);
 
         return this;
     }
