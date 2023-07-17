@@ -1,8 +1,12 @@
+/// <reference path="./engine/Gameobject.ts" />
+
 class Main {
 
     public container: SVGElement;
     public layers: SVGGElement[] = [];
     public gameobjects: UniqueList<Gameobject> = new UniqueList<Gameobject>();
+
+    public player: Player;
 
     constructor() {
     }
@@ -18,6 +22,25 @@ class Main {
             this.container.appendChild(layer);
             this.layers[i] = layer;
         }
+
+        this.player = new Player(this);
+        this.player.instantiate();
+
+        let foodSize = 0;
+        for (let i = 0; i < 10; i++) {
+            let food = new Food(this);
+            food.pos.x = 100 + 800 * Math.random();
+            food.pos.y = 100 + 800 * Math.random();
+            food.radius = 15 + 50 * Math.random();
+            food.instantiate();
+
+            foodSize += food.size;
+        }
+
+        console.log("FoodSize = " + foodSize);
+        setInterval(() => {
+            console.log("PlayerSize = " + this.player.size);
+        }, 1000);
 
         this._mainLoop();
     }

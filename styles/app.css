@@ -35,3 +35,15 @@ body {
     bottom: 15px;
     z-index: 10;
 }
+
+.player {
+    fill: rgb(115, 255, 255);
+    stroke: white;
+    stroke-width: 4;
+}
+
+.food {
+    fill: pink;
+    stroke: white;
+    stroke-width: 4;
+}

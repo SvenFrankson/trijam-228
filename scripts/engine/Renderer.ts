@@ -84,7 +84,7 @@ class CircleRenderer extends Renderer {
     public draw(): void {
         if (!this.svgElement) {
             this.svgElement = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            this.svgElement.setAttribute("r", this.radius.toFixed(0));
+            this.svgElement.setAttribute("r", this.radius.toFixed(1));
             this._classList.forEach(c => {
                 this.onClassAdded(c);
             });
