@@ -2,6 +2,7 @@
 
 class Main {
 
+    public containerRect: DOMRect;
     public container: SVGElement;
     public layers: SVGGElement[] = [];
     public gameobjects: UniqueList<Gameobject> = new UniqueList<Gameobject>();
@@ -17,6 +18,8 @@ class Main {
         this.container.setAttribute("viewBox", "0 0 1000 1000");
         document.body.appendChild(this.container);
 
+        this._onResize();
+
         for (let i = 0; i < 4; i++) {
             let layer = document.createElementNS("http://www.w3.org/2000/svg", "g");
             this.container.appendChild(layer);
@@ -29,19 +32,15 @@ class Main {
         let foodSize = 0;
         for (let i = 0; i < 10; i++) {
             let food = new Food(this);
+            food.instantiate();
             food.pos.x = 100 + 800 * Math.random();
             food.pos.y = 100 + 800 * Math.random();
-            food.radius = 15 + 50 * Math.random();
-            food.instantiate();
+            food.radius = 5 + 50 * Math.random();
 
             foodSize += food.size;
         }
 
-        console.log("FoodSize = " + foodSize);
-        setInterval(() => {
-            console.log("PlayerSize = " + this.player.size);
-        }, 1000);
-
+        window.addEventListener("resize", this._onResize);
         this._mainLoop();
     }
 
@@ -96,6 +95,28 @@ class Main {
         while (this.gameobjects.length > 0) {
             this.gameobjects.get(0).dispose();
         }
+    }
+
+    public clientXYToContainerXY(clientX: number, clientY: number): Vec2 {
+        let v = new Vec2();
+        return this.clientXYToContainerXYToRef(clientX, clientY, v);
+    }
+
+    public clientXYToContainerXYToRef(clientX: number, clientY: number, ref: Vec2): Vec2 {
+        let px = clientX - this.containerRect.left;
+        let py = clientY - this.containerRect.top;
+
+        px = px / this.containerRect.width * 1000;
+        py = py / this.containerRect.height * 1000;
+
+        ref.x = px;
+        ref.y = py;
+        
+        return ref;
+    }
+
+    private _onResize = () => {
+        this.containerRect = this.container.getBoundingClientRect()
     }
 
     private _update: (dt: number) => void;

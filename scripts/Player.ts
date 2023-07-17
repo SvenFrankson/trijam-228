@@ -1,35 +1,14 @@
-class Player extends Gameobject {
+/// <reference path="./Cell.ts" />
 
-    private _circleRenderer: CircleRenderer;
-    public speed: Vec2 = new Vec2(0, 0);
-    private _radius: number = 20;
-    public get radius(): number {
-        return this._radius;
-    }
-    public set radius(v: number) {
-        this._radius = v;
-        this._radius = Math.max(this._radius, 1);
-        if (this._circleRenderer) {
-            this._circleRenderer.radius = this._radius;
-        }
-    }
-
-    public get size(): number {
-        return 2 * Math.PI * this.radius * this.radius;
-    }
-    public set size(v: number) {
-        let r = Math.sqrt(v / (2 * Math.PI));
-        this.radius = r;
-    }
+class Player extends Cell {
 
     constructor(main: Main) {
-        super({}, main);
+        super(main);
     }
 
     public instantiate(): void {
         super.instantiate();
 
-        this._circleRenderer = this.addComponent(new CircleRenderer(this, { radius: this.radius, layer: 2 })) as CircleRenderer;
         this._circleRenderer.addClass("player");
     }
 
@@ -41,74 +20,39 @@ class Player extends Gameobject {
 
         this.speed.x = 100;
 
-        window.addEventListener("pointerup", this._onPointerUp);
+        window.addEventListener("pointerup", this._onPointerDown);
     }
 
     public update(dt: number): void {
-        this.speed.scaleInPlace(0.999);
-        this.pos.x += this.speed.x * dt;
-        this.pos.y += this.speed.y * dt;
-
-        if (this.pos.x < this.radius) {
-            this.pos.x = this.radius;
-            this.speed.x *= -1;
-        }
-        if (this.pos.y < this.radius) {
-            this.pos.y = this.radius;
-            this.speed.y *= -1;
-        }
-        if (this.pos.x > 1000 - this.radius) {
-            this.pos.x = 1000 - this.radius;
-            this.speed.x *= -1;
-        }
-        if (this.pos.y > 1000 - this.radius) {
-            this.pos.y = 1000 - this.radius;
-            this.speed.y *= -1;
-        }
-
-        this.main.gameobjects.forEach(other => {
-            if (other instanceof Food) {
-                let sqrDist = Vec2.DistanceSquared(this.pos, other.pos);
-                let rSum = this.radius + other.radius;
-                if (this.radius > other.radius) {
-                    while (other.radius > 0 && sqrDist < rSum * rSum) {
-                        let dSize = other.size;
-                        other.size -= 10;
-                        dSize = dSize - other.size;
-                        this.size += dSize * 0.5;
-                        rSum = this.radius + other.radius;
-                        this.speed.scaleInPlace(0.999);
-                    }
-                }
-                else if (sqrDist < rSum * rSum) {
-                    let axis = this.pos.subtract(other.pos);
-                    this.speed.mirrorInPlace(axis);
-                    this.pos.x += this.speed.x * dt;
-                    this.pos.y += this.speed.y * dt;            
-                }
-            }
-        });
+        super.update(dt);
     }
 
     public stop(): void {
         super.stop();
-        window.removeEventListener("pointerdown", this._onPointerUp);
+        window.removeEventListener("pointerdown", this._onPointerDown);
     }
 
-    public _onPointerUp = (ev: PointerEvent) => {
-        let rect = this.main.container.getBoundingClientRect();
-        let px = ev.clientX - rect.left;
-        let py = ev.clientY - rect.top;
+    public _onPointerDown = (ev: PointerEvent) => {
+        let p = this.main.clientXYToContainerXY(ev.clientX, ev.clientY);
 
-        px = px / rect.width * 1000;
-        py = py / rect.height * 1000;
-
-        let dx = this.pos.x - px;
-        let dy = this.pos.y - py;
+        let dx = this.pos.x - p.x;
+        let dy = this.pos.y - p.y;
 
         let delta = new Vec2(dx, dy);
         if (delta.lengthSquared() > 1) {
             delta.normalizeInPlace();
+
+            let spit = new Food(this.main);
+            spit.pos.copyFrom(this.pos);
+            spit.size = this.size * 0.05;
+            spit.pos.subtractInPlace(delta.scale(this.radius + spit.radius + 2));
+            spit.speed = delta.scale(-200);
+            spit.instantiate();
+            spit.draw();
+            spit.start();
+
+            this.size -= spit.size;
+
             delta.scaleInPlace(100);
             this.speed.addInPlace(delta);
         }

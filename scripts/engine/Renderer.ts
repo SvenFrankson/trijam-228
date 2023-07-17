@@ -93,8 +93,10 @@ class CircleRenderer extends Renderer {
     }
 
     public updatePosRot(): void {
-        this.svgElement.setAttribute("cx", this.gameobject.pos.x.toFixed(1));
-        this.svgElement.setAttribute("cy", this.gameobject.pos.y.toFixed(1));
+        if (this.svgElement) {
+            this.svgElement.setAttribute("cx", this.gameobject.pos.x.toFixed(1));
+            this.svgElement.setAttribute("cy", this.gameobject.pos.y.toFixed(1));
+        }
     }
 
     public dispose(): void {

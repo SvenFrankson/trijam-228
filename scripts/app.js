@@ -59,7 +59,7 @@ class Gameobject {
     }
 }
 /// <reference path="./engine/Gameobject.ts" />
-class Food extends Gameobject {
+class Cell extends Gameobject {
     constructor(main) {
         super({}, main);
         this.speed = new Vec2(0, 0);
@@ -86,12 +86,12 @@ class Food extends Gameobject {
     instantiate() {
         super.instantiate();
         this._circleRenderer = this.addComponent(new CircleRenderer(this, { radius: this.radius, layer: 2 }));
-        this._circleRenderer.addClass("food");
     }
     start() {
         super.start();
     }
     update(dt) {
+        super.update(dt);
         this.speed.scaleInPlace(0.999);
         this.pos.x += this.speed.x * dt;
         this.pos.y += this.speed.y * dt;
@@ -111,6 +111,47 @@ class Food extends Gameobject {
             this.pos.y = 1000 - this.radius;
             this.speed.y *= -1;
         }
+        this.main.gameobjects.forEach(other => {
+            if (other != this && other instanceof Cell) {
+                let sqrDist = Vec2.DistanceSquared(this.pos, other.pos);
+                let rSum = this.radius + other.radius;
+                if (this.radius > other.radius) {
+                    while (other.radius > 0 && sqrDist < rSum * rSum) {
+                        let dSize = other.size;
+                        other.size -= 10;
+                        dSize = dSize - other.size;
+                        this.size += dSize;
+                        rSum = this.radius + other.radius;
+                        this.speed.scaleInPlace(0.999);
+                    }
+                }
+                else if (sqrDist < rSum * rSum) {
+                    //let axis = this.pos.subtract(other.pos);
+                    //this.speed.mirrorInPlace(axis);
+                    //this.pos.x += this.speed.x * dt;
+                    //this.pos.y += this.speed.y * dt;            
+                }
+            }
+        });
+    }
+    stop() {
+        super.stop();
+    }
+}
+/// <reference path="./Cell.ts" />
+class Food extends Cell {
+    constructor(main) {
+        super(main);
+    }
+    instantiate() {
+        super.instantiate();
+        this._circleRenderer.addClass("food");
+    }
+    start() {
+        super.start();
+    }
+    update(dt) {
+        super.update(dt);
     }
     stop() {
         super.stop();
@@ -134,12 +175,16 @@ class Main {
             }
             requestAnimationFrame(this._mainLoop);
         };
+        this._onResize = () => {
+            this.containerRect = this.container.getBoundingClientRect();
+        };
     }
     instantiate() {
         this.container = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         this.container.id = "main-container";
         this.container.setAttribute("viewBox", "0 0 1000 1000");
         document.body.appendChild(this.container);
+        this._onResize();
         for (let i = 0; i < 4; i++) {
             let layer = document.createElementNS("http://www.w3.org/2000/svg", "g");
             this.container.appendChild(layer);
@@ -150,16 +195,13 @@ class Main {
         let foodSize = 0;
         for (let i = 0; i < 10; i++) {
             let food = new Food(this);
+            food.instantiate();
             food.pos.x = 100 + 800 * Math.random();
             food.pos.y = 100 + 800 * Math.random();
-            food.radius = 15 + 50 * Math.random();
-            food.instantiate();
+            food.radius = 5 + 50 * Math.random();
             foodSize += food.size;
         }
-        console.log("FoodSize = " + foodSize);
-        setInterval(() => {
-            console.log("PlayerSize = " + this.player.size);
-        }, 1000);
+        window.addEventListener("resize", this._onResize);
         this._mainLoop();
     }
     start() {
@@ -193,6 +235,19 @@ class Main {
             this.gameobjects.get(0).dispose();
         }
     }
+    clientXYToContainerXY(clientX, clientY) {
+        let v = new Vec2();
+        return this.clientXYToContainerXYToRef(clientX, clientY, v);
+    }
+    clientXYToContainerXYToRef(clientX, clientY, ref) {
+        let px = clientX - this.containerRect.left;
+        let py = clientY - this.containerRect.top;
+        px = px / this.containerRect.width * 1000;
+        py = py / this.containerRect.height * 1000;
+        ref.x = px;
+        ref.y = py;
+        return ref;
+    }
 }
 window.addEventListener("load", () => {
     let main = new Main();
@@ -201,47 +256,33 @@ window.addEventListener("load", () => {
         main.start();
     });
 });
-class Player extends Gameobject {
+/// <reference path="./Cell.ts" />
+class Player extends Cell {
     constructor(main) {
-        super({}, main);
-        this.speed = new Vec2(0, 0);
-        this._radius = 20;
-        this._onPointerUp = (ev) => {
-            let rect = this.main.container.getBoundingClientRect();
-            let px = ev.clientX - rect.left;
-            let py = ev.clientY - rect.top;
-            px = px / rect.width * 1000;
-            py = py / rect.height * 1000;
-            let dx = this.pos.x - px;
-            let dy = this.pos.y - py;
+        super(main);
+        this._onPointerDown = (ev) => {
+            let p = this.main.clientXYToContainerXY(ev.clientX, ev.clientY);
+            let dx = this.pos.x - p.x;
+            let dy = this.pos.y - p.y;
             let delta = new Vec2(dx, dy);
             if (delta.lengthSquared() > 1) {
                 delta.normalizeInPlace();
+                let spit = new Food(this.main);
+                spit.pos.copyFrom(this.pos);
+                spit.size = this.size * 0.05;
+                spit.pos.subtractInPlace(delta.scale(this.radius + spit.radius + 2));
+                spit.speed = delta.scale(-200);
+                spit.instantiate();
+                spit.draw();
+                spit.start();
+                this.size -= spit.size;
                 delta.scaleInPlace(100);
                 this.speed.addInPlace(delta);
             }
         };
     }
-    get radius() {
-        return this._radius;
-    }
-    set radius(v) {
-        this._radius = v;
-        this._radius = Math.max(this._radius, 1);
-        if (this._circleRenderer) {
-            this._circleRenderer.radius = this._radius;
-        }
-    }
-    get size() {
-        return 2 * Math.PI * this.radius * this.radius;
-    }
-    set size(v) {
-        let r = Math.sqrt(v / (2 * Math.PI));
-        this.radius = r;
-    }
     instantiate() {
         super.instantiate();
-        this._circleRenderer = this.addComponent(new CircleRenderer(this, { radius: this.radius, layer: 2 }));
         this._circleRenderer.addClass("player");
     }
     start() {
@@ -249,54 +290,14 @@ class Player extends Gameobject {
         this.pos.x = 500;
         this.pos.y = 500;
         this.speed.x = 100;
-        window.addEventListener("pointerup", this._onPointerUp);
+        window.addEventListener("pointerup", this._onPointerDown);
     }
     update(dt) {
-        this.speed.scaleInPlace(0.999);
-        this.pos.x += this.speed.x * dt;
-        this.pos.y += this.speed.y * dt;
-        if (this.pos.x < this.radius) {
-            this.pos.x = this.radius;
-            this.speed.x *= -1;
-        }
-        if (this.pos.y < this.radius) {
-            this.pos.y = this.radius;
-            this.speed.y *= -1;
-        }
-        if (this.pos.x > 1000 - this.radius) {
-            this.pos.x = 1000 - this.radius;
-            this.speed.x *= -1;
-        }
-        if (this.pos.y > 1000 - this.radius) {
-            this.pos.y = 1000 - this.radius;
-            this.speed.y *= -1;
-        }
-        this.main.gameobjects.forEach(other => {
-            if (other instanceof Food) {
-                let sqrDist = Vec2.DistanceSquared(this.pos, other.pos);
-                let rSum = this.radius + other.radius;
-                if (this.radius > other.radius) {
-                    while (other.radius > 0 && sqrDist < rSum * rSum) {
-                        let dSize = other.size;
-                        other.size -= 10;
-                        dSize = dSize - other.size;
-                        this.size += dSize * 0.5;
-                        rSum = this.radius + other.radius;
-                        this.speed.scaleInPlace(0.999);
-                    }
-                }
-                else if (sqrDist < rSum * rSum) {
-                    let axis = this.pos.subtract(other.pos);
-                    this.speed.mirrorInPlace(axis);
-                    this.pos.x += this.speed.x * dt;
-                    this.pos.y += this.speed.y * dt;
-                }
-            }
-        });
+        super.update(dt);
     }
     stop() {
         super.stop();
-        window.removeEventListener("pointerdown", this._onPointerUp);
+        window.removeEventListener("pointerdown", this._onPointerDown);
     }
 }
 class Component {
@@ -379,8 +380,10 @@ class CircleRenderer extends Renderer {
         }
     }
     updatePosRot() {
-        this.svgElement.setAttribute("cx", this.gameobject.pos.x.toFixed(1));
-        this.svgElement.setAttribute("cy", this.gameobject.pos.y.toFixed(1));
+        if (this.svgElement) {
+            this.svgElement.setAttribute("cx", this.gameobject.pos.x.toFixed(1));
+            this.svgElement.setAttribute("cy", this.gameobject.pos.y.toFixed(1));
+        }
     }
     dispose() {
         if (this.svgElement) {
