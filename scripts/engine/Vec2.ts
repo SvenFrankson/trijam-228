@@ -85,6 +85,10 @@ class Vec2 {
         return this;
     }
 
+    public normalize(): Vec2 {
+        return this.clone().normalizeInPlace();
+    }
+
     public normalizeInPlace(): Vec2 {
         this.scaleInPlace(1 / this.length());
         return this;

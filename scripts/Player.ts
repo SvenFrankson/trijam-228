@@ -2,6 +2,8 @@
 
 class Player extends Cell {
 
+    public _pathRenderer: PathRenderer;
+
     constructor(main: Main) {
         super(main);
     }
@@ -10,6 +12,7 @@ class Player extends Cell {
         super.instantiate();
 
         this._circleRenderer.addClass("player");
+        this._pathRenderer = this.addComponent(new PathRenderer(this, { classList: ["player-dir"] })) as PathRenderer;
     }
 
     public start(): void {
@@ -25,6 +28,22 @@ class Player extends Cell {
 
     public update(dt: number): void {
         super.update(dt);
+
+        let p = this.main.clientXYToContainerXY(this.main.pointerClientPos.x, this.main.pointerClientPos.y);
+
+        let dx = this.pos.x - p.x;
+        let dy = this.pos.y - p.y;
+
+        let delta = new Vec2(dx, dy);
+        if (delta.lengthSquared() > 1) {
+
+            delta.normalizeInPlace();
+            delta.scaleInPlace(100);
+            let newSpeed = this.speed.add(delta);
+            let origin = newSpeed.normalize().scaleInPlace(this.radius);
+            let end = newSpeed.normalize().scaleInPlace(this.radius + newSpeed.length());
+            this._pathRenderer.points = [origin, end];
+        }
     }
 
     public stop(): void {

@@ -175,6 +175,11 @@ class Main {
             }
             requestAnimationFrame(this._mainLoop);
         };
+        this.pointerClientPos = new Vec2();
+        this._onPointerMove = (ev) => {
+            this.pointerClientPos.x = ev.clientX;
+            this.pointerClientPos.y = ev.clientY;
+        };
         this._onResize = () => {
             this.containerRect = this.container.getBoundingClientRect();
         };
@@ -193,15 +198,19 @@ class Main {
         this.player = new Player(this);
         this.player.instantiate();
         let foodSize = 0;
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 200; i++) {
             let food = new Food(this);
             food.instantiate();
             food.pos.x = 100 + 800 * Math.random();
             food.pos.y = 100 + 800 * Math.random();
-            food.radius = 5 + 50 * Math.random();
+            food.speed.x = -10 + 20 * Math.random();
+            food.speed.y = -10 + 20 * Math.random();
+            food.radius = 5 + 5 * Math.random();
             foodSize += food.size;
         }
         window.addEventListener("resize", this._onResize);
+        window.addEventListener("pointerenter", this._onPointerMove);
+        window.addEventListener("pointermove", this._onPointerMove);
         this._mainLoop();
     }
     start() {
@@ -284,6 +293,7 @@ class Player extends Cell {
     instantiate() {
         super.instantiate();
         this._circleRenderer.addClass("player");
+        this._pathRenderer = this.addComponent(new PathRenderer(this, { classList: ["player-dir"] }));
     }
     start() {
         super.start();
@@ -294,6 +304,18 @@ class Player extends Cell {
     }
     update(dt) {
         super.update(dt);
+        let p = this.main.clientXYToContainerXY(this.main.pointerClientPos.x, this.main.pointerClientPos.y);
+        let dx = this.pos.x - p.x;
+        let dy = this.pos.y - p.y;
+        let delta = new Vec2(dx, dy);
+        if (delta.lengthSquared() > 1) {
+            delta.normalizeInPlace();
+            delta.scaleInPlace(100);
+            let newSpeed = this.speed.add(delta);
+            let origin = newSpeed.normalize().scaleInPlace(this.radius);
+            let end = newSpeed.normalize().scaleInPlace(this.radius + newSpeed.length());
+            this._pathRenderer.points = [origin, end];
+        }
     }
     stop() {
         super.stop();
@@ -653,6 +675,9 @@ class Vec2 {
         this.x -= other.x;
         this.y -= other.y;
         return this;
+    }
+    normalize() {
+        return this.clone().normalizeInPlace();
     }
     normalizeInPlace() {
         this.scaleInPlace(1 / this.length());

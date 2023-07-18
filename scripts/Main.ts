@@ -30,17 +30,21 @@ class Main {
         this.player.instantiate();
 
         let foodSize = 0;
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 200; i++) {
             let food = new Food(this);
             food.instantiate();
             food.pos.x = 100 + 800 * Math.random();
             food.pos.y = 100 + 800 * Math.random();
-            food.radius = 5 + 50 * Math.random();
+            food.speed.x = -10 + 20 * Math.random();
+            food.speed.y = -10 + 20 * Math.random();
+            food.radius = 5 + 5 * Math.random();
 
             foodSize += food.size;
         }
 
         window.addEventListener("resize", this._onResize);
+        window.addEventListener("pointerenter", this._onPointerMove);
+        window.addEventListener("pointermove", this._onPointerMove);
         this._mainLoop();
     }
 
@@ -113,6 +117,13 @@ class Main {
         ref.y = py;
         
         return ref;
+    }
+
+    public pointerClientPos: Vec2 = new Vec2();
+
+    private _onPointerMove = (ev: PointerEvent) => {
+        this.pointerClientPos.x = ev.clientX;
+        this.pointerClientPos.y = ev.clientY;
     }
 
     private _onResize = () => {

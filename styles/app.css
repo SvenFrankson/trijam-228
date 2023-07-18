@@ -43,6 +43,11 @@ body {
     stroke-width: 4;
 }
 
+.player-dir {
+    stroke: white;
+    stroke-width: 4;
+}
+
 .food {
     fill: pink;
     stroke: white;
