@@ -67,21 +67,25 @@ class Cell extends Gameobject {
             if (other != this && other instanceof Cell) {
                 let sqrDist = Vec2.DistanceSquared(this.pos, other.pos);
                 let rSum = this.radius + other.radius;
-                if (this.radius > other.radius) {
-                    while (other.radius > 0 && sqrDist < rSum * rSum) {
-                        let dSize = other.size;
-                        other.size -= 10;
-                        dSize = dSize - other.size;
-                        this.size += dSize;
-                        rSum = this.radius + other.radius;
-                        this.speed.scaleInPlace(0.999);
+                if (sqrDist < rSum * rSum) {
+                    if (other instanceof Food || other instanceof Player) {
+                        if (this.radius > other.radius) {
+                            while (other.radius > 0 && sqrDist < rSum * rSum) {
+                                let dSize = other.size;
+                                other.size -= 10;
+                                dSize = dSize - other.size;
+                                this.size += dSize;
+                                rSum = this.radius + other.radius;
+                                this.speed.scaleInPlace(0.999);
+                            }
+                        }
                     }
-                }
-                else if (sqrDist < rSum * rSum) {
-                    //let axis = this.pos.subtract(other.pos);
-                    //this.speed.mirrorInPlace(axis);
-                    //this.pos.x += this.speed.x * dt;
-                    //this.pos.y += this.speed.y * dt;            
+                    else if (other instanceof Bouncer) {
+                        let axis = this.pos.subtract(other.pos);
+                        this.speed.mirrorInPlace(axis);
+                        this.pos.x += this.speed.x * dt;
+                        this.pos.y += this.speed.y * dt;    
+                    }
                 }
             }
         });

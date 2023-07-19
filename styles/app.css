@@ -53,3 +53,15 @@ body {
     stroke: white;
     stroke-width: 4;
 }
+
+.black-hole {
+    fill: black;
+    stroke: white;
+    stroke-width: 4;
+}
+
+.bouncer {
+    fill: rgb(34, 206, 126);
+    stroke: white;
+    stroke-width: 4;
+}

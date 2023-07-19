@@ -115,24 +115,83 @@ class Cell extends Gameobject {
             if (other != this && other instanceof Cell) {
                 let sqrDist = Vec2.DistanceSquared(this.pos, other.pos);
                 let rSum = this.radius + other.radius;
-                if (this.radius > other.radius) {
-                    while (other.radius > 0 && sqrDist < rSum * rSum) {
-                        let dSize = other.size;
-                        other.size -= 10;
-                        dSize = dSize - other.size;
-                        this.size += dSize;
-                        rSum = this.radius + other.radius;
-                        this.speed.scaleInPlace(0.999);
+                if (sqrDist < rSum * rSum) {
+                    if (other instanceof Food || other instanceof Player) {
+                        if (this.radius > other.radius) {
+                            while (other.radius > 0 && sqrDist < rSum * rSum) {
+                                let dSize = other.size;
+                                other.size -= 10;
+                                dSize = dSize - other.size;
+                                this.size += dSize;
+                                rSum = this.radius + other.radius;
+                                this.speed.scaleInPlace(0.999);
+                            }
+                        }
                     }
-                }
-                else if (sqrDist < rSum * rSum) {
-                    //let axis = this.pos.subtract(other.pos);
-                    //this.speed.mirrorInPlace(axis);
-                    //this.pos.x += this.speed.x * dt;
-                    //this.pos.y += this.speed.y * dt;            
+                    else if (other instanceof Bouncer) {
+                        let axis = this.pos.subtract(other.pos);
+                        this.speed.mirrorInPlace(axis);
+                        this.pos.x += this.speed.x * dt;
+                        this.pos.y += this.speed.y * dt;
+                    }
                 }
             }
         });
+    }
+    stop() {
+        super.stop();
+    }
+}
+/// <reference path="./Cell.ts" />
+class Blackhole extends Cell {
+    constructor(main) {
+        super(main);
+    }
+    instantiate() {
+        super.instantiate();
+        this._circleRenderer.addClass("black-hole");
+    }
+    start() {
+        super.start();
+    }
+    update(dt) {
+        super.update(dt);
+        this.main.gameobjects.forEach(other => {
+            if (other != this && other instanceof Cell) {
+                let sqrDist = Vec2.DistanceSquared(this.pos, other.pos);
+                let rSum = this.radius + other.radius;
+                if (sqrDist < rSum * rSum) {
+                    if (!(other instanceof Blackhole) || (other instanceof Blackhole && this.radius > other.radius)) {
+                        while (other.radius > 0 && sqrDist < rSum * rSum) {
+                            let dSize = other.size;
+                            other.size -= 10;
+                            dSize = dSize - other.size;
+                            this.size += dSize;
+                            rSum = this.radius + other.radius;
+                            this.speed.scaleInPlace(0.999);
+                        }
+                    }
+                }
+            }
+        });
+    }
+    stop() {
+        super.stop();
+    }
+}
+/// <reference path="./Cell.ts" />
+class Bouncer extends Cell {
+    constructor(main) {
+        super(main);
+    }
+    instantiate() {
+        super.instantiate();
+        this._circleRenderer.addClass("bouncer");
+    }
+    start() {
+        super.start();
+    }
+    update(dt) {
     }
     stop() {
         super.stop();
@@ -207,6 +266,20 @@ class Main {
             food.speed.y = -10 + 20 * Math.random();
             food.radius = 5 + 5 * Math.random();
             foodSize += food.size;
+        }
+        for (let i = 0; i < 3; i++) {
+            let blackhole = new Blackhole(this);
+            blackhole.instantiate();
+            blackhole.pos.x = 100 + 800 * Math.random();
+            blackhole.pos.y = 100 + 800 * Math.random();
+            blackhole.radius = 20 + 20 * Math.random();
+        }
+        for (let i = 0; i < 6; i++) {
+            let bouncer = new Bouncer(this);
+            bouncer.instantiate();
+            bouncer.pos.x = 100 + 800 * Math.random();
+            bouncer.pos.y = 100 + 800 * Math.random();
+            bouncer.radius = 40 + 20 * Math.random();
         }
         window.addEventListener("resize", this._onResize);
         window.addEventListener("pointerenter", this._onPointerMove);

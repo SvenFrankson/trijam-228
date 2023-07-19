@@ -42,6 +42,22 @@ class Main {
             foodSize += food.size;
         }
 
+        for (let i = 0; i < 3; i++) {
+            let blackhole = new Blackhole(this);
+            blackhole.instantiate();
+            blackhole.pos.x = 100 + 800 * Math.random();
+            blackhole.pos.y = 100 + 800 * Math.random();
+            blackhole.radius = 20 + 20 * Math.random();
+        }
+        
+        for (let i = 0; i < 6; i++) {
+            let bouncer = new Bouncer(this);
+            bouncer.instantiate();
+            bouncer.pos.x = 100 + 800 * Math.random();
+            bouncer.pos.y = 100 + 800 * Math.random();
+            bouncer.radius = 40 + 20 * Math.random();
+        }
+
         window.addEventListener("resize", this._onResize);
         window.addEventListener("pointerenter", this._onPointerMove);
         window.addEventListener("pointermove", this._onPointerMove);
