@@ -29,7 +29,7 @@ class Blackhole extends Cell {
                             let dSize = other.size;
                             other.size -= 10;
                             dSize = dSize - other.size;
-                            this.size += dSize;
+                            this.size += dSize * 0.5;
                             rSum = this.radius + other.radius;
                             this.speed.scaleInPlace(0.999);
                         }
